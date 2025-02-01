@@ -17,17 +17,17 @@ export class UrlService {
       throw new HttpException({ message: 'URL already exists', shortenedUrl: urlExists.shortenedUrl }, HttpStatus.BAD_REQUEST);
     }
     
-    const urlcreate = await this.urlModel.create({ originalUrl }); 
-    return  { message: 'URL created', shortenedUrl: urlcreate.shortenedUrl };
-    
+    const urlcreate = await this.urlModel.create({ originalUrl });
+    await this.urlModel.findOneAndUpdate({ originalUrl }, { $set: { shortenedUrl: process.env.CORS_ORIGIN +'/url/'+ urlcreate.shortUrlId} });
+    return  { message: 'URL created', shortenedUrl: process.env.CORS_ORIGIN +'/url/'+ urlcreate.shortUrlId, shortUrlId: urlcreate.shortUrlId };
+
   }
-  async findOne(shortenedUrl: string) {
-      const url = await this.urlModel.findOne({shortenedUrl: shortenedUrl});
+  async findOne(shortUrlId: string) {
+      const url = await this.urlModel.findOne({shortUrlId: shortUrlId});
       if (!url) {
         throw new HttpException({ message: 'URL not found' }, HttpStatus.NOT_FOUND);
       } else {
         return { message: 'URL found', originalUrl: url.originalUrl };
       }
-      
   }
 }

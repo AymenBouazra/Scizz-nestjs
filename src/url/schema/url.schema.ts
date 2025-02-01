@@ -15,14 +15,18 @@ export class Url extends Document {
   originalUrl: string;
 
   @Prop({ 
-    unique: true, 
+    type: String, 
+  })
+  shortenedUrl: string;
+
+  @Prop({ 
     type: String, 
     default: () => randomString.generate({
       length: 8,
       charset: 'alphabetic'
     })
-  })
-  shortenedUrl: string;
+  })  
+  shortUrlId: string;
 }
 
 export const UrlSchema = SchemaFactory.createForClass(Url);
