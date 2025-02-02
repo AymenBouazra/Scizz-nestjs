@@ -6,10 +6,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
     UrlModule,
+    PassportModule.register({ defaultStrategy: 'jwt'}),
     MongooseModule.forRoot(process.env.DB_URI ?? 'mongodb://localhost:27017/url-shortener'),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -21,4 +23,5 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+}

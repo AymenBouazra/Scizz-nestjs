@@ -24,7 +24,7 @@ export class AuthService {
     const { firstname, lastname, password, email } = registerDto;
     const found = await this.authModel.findOne({ email })
     if (found) {
-      throw new HttpException({ message: 'A user with this email already exist!' }, HttpStatus.BAD_REQUEST);
+      return new HttpException({ message: 'A user with this email already exist!' }, HttpStatus.BAD_REQUEST);
     } else {
       const hash = await bcrypt.hash(password, 10);
       const user = await this.authModel.create({
@@ -48,7 +48,7 @@ export class AuthService {
         <b>Your account was created successfully</b>
         `,
       });
-      return { message: 'You have been registered successfully!',user };
+      return new HttpException({ message: 'You have been registered successfully!', user }, HttpStatus.CREATED);
     }
   }
 
@@ -59,18 +59,18 @@ export class AuthService {
         const validPassword = await bcrypt.compare(password, auth.password)
         if (validPassword) {
           const token = await this.jwtService.signAsync({ id: auth._id });
-          return { token, message: 'Welcome ' + auth.firstname };
+          return new HttpException({ message: 'Welcome ' + auth.firstname, token }, HttpStatus.OK);
         }
         else {
-          throw new HttpException('Email or password incorrect!', HttpStatus.BAD_REQUEST);
+          return new HttpException({ message: 'Email or password incorrect!' }, HttpStatus.BAD_REQUEST);
         }
     } else {
-      throw new HttpException('Email or password incorrect!', HttpStatus.BAD_REQUEST);
+      return new HttpException({ message: 'Email or password incorrect!' }, HttpStatus.BAD_REQUEST);
     }
   }
 
   async forgetPassword(forgetPasswordDto: ForgetPasswordDto) {
-    const { email } = forgetPasswordDto;
+    const { email } = forgetPasswordDto;    
     const auth = await this.authModel.findOne({ email });
     try {
       if (auth) {
@@ -90,26 +90,27 @@ export class AuthService {
         await transporter.sendMail({
           from: `"Aymen Boauzra" ${process.env.EMAIL}`,
           to: email,
-          subject: "Account confirmation ✔",
+          subject: "Forgot password account ✔",
           html: ` 
             <h2>Reset password</h2><br>
-            <a href='${process.env.HOST}reset-password/${resetToken}'>Reset password link</a>
+            <a href='${process.env.HOST}/reset-password/${resetToken}'>Reset password link</a>
             <b style='color:red'>This link will expire after 15 minutes </b>
             `,
         });
-        return { message: 'Please check your mailbox to reset your account\'s password!' }
+        return new HttpException({ message: 'Please check your mailbox to reset your account\'s password!' }, HttpStatus.OK);
       } else {
-        throw new HttpException('Cannot find any user wih this email, try again with an existing e-mail account!', HttpStatus.INTERNAL_SERVER_ERROR);
+        return new HttpException({ message: 'Cannot find any user wih this email, try again with an existing e-mail account!' }, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
 
-      throw new HttpException({message: 'Internal server error!',error}, HttpStatus.INTERNAL_SERVER_ERROR);
+      return new HttpException({message: 'Internal server error!',error}, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto, token: string) {
 
     const { password } = resetPasswordDto;
+  
     const tokenFound = await this.tokenModel.findOne({ resetToken: token });
     if (tokenFound) {
       const auth = await this.authModel.findById(tokenFound.userId);
@@ -127,19 +128,17 @@ export class AuthService {
         await transporter.sendMail({
           from: `"Aymen Boauzra" ${process.env.EMAIL}`,
           to: auth.email,
-          subject: "Account confirmation ✔",
+          subject: "Account password reset ✔",
           html: ` 
             <b>Your password has been reset successfully</b><br>
           `,
         });
-        return { message: 'Password has been reset!' }
+        return new HttpException({ message: 'Password has been reset!' }, HttpStatus.OK);
       } else {
-        throw new HttpException('Password reset link expired or invalid, create a new password reset!', HttpStatus.BAD_REQUEST);
+        return new HttpException('Password reset link expired or invalid, create a new password reset!', HttpStatus.BAD_REQUEST);
       }
     } else {
-      throw new HttpException('Password reset link expired or invalid, create a new password reset!', HttpStatus.BAD_REQUEST);
+      return new HttpException('Password reset link expired or invalid, create a new password reset!', HttpStatus.BAD_REQUEST);
     }
   }
-
-
 }
