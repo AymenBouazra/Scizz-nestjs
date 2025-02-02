@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, ValidationPipe } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login-user.dto";
@@ -32,5 +32,10 @@ export class AuthController {
   @Put('/reset-password/:token')
   resetPassword(@Body(new ValidationPipe()) resetPasswordDto: ResetPasswordDto, @Param('token') token: string): Promise<any> {
     return this.userService.resetPassword(resetPasswordDto, token);
+  }
+
+  @Get('/profile/:token')  
+  getProfile(@Param('token') token: string): Promise<any> {
+    return this.userService.getProfile(token);
   }
 }

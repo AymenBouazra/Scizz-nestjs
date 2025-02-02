@@ -27,6 +27,12 @@ export class Url extends Document {
     })
   })  
   shortUrlId: string;
+
+  @Prop({ 
+    type: Number, 
+    default: 0
+  })
+  clicks: number;
 }
 
 export const UrlSchema = SchemaFactory.createForClass(Url);

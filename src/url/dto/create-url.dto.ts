@@ -5,4 +5,6 @@ export class CreateUrlDto {
   @IsString()
   @IsUrl({ require_protocol: true }, { message: 'Must be a valid URL with protocol' })
   originalUrl: string;
+  @IsString()
+  token: string;
 }

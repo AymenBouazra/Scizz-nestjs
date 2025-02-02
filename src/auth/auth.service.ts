@@ -11,6 +11,8 @@ import { RegisterDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login-user.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { jwtDecode } from 'jwt-decode';
+import { JwtPayload } from 'src/jwt.payload';
 @Injectable()
 export class AuthService {
   constructor(
@@ -141,4 +143,15 @@ export class AuthService {
       return new HttpException('Password reset link expired or invalid, create a new password reset!', HttpStatus.BAD_REQUEST);
     }
   }
+  async getProfile(token: string) {
+    if (token) {
+      const decodedToken = jwtDecode<JwtPayload>(token);
+      const { id } = decodedToken;
+      const user = await this.authModel.findById(id).populate('urlIds').lean().exec();
+      return user;
+    } else {
+      throw new HttpException({ message: 'No token provided' }, HttpStatus.BAD_REQUEST);
+    }
+  }
+
 }

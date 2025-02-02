@@ -3,4 +3,5 @@ export class Url {
   originalUrl: string;
   shortenedUrl: string;
   shortUrlId: string;
+  clicks: number;
 }
