@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Header, Get, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Param, Header, Get, Patch, UsePipes, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import { UrlService } from './url.service';
 import { CreateUrlDto } from './dto/create-url.dto';
 
@@ -7,6 +7,15 @@ export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe({ 
+    exceptionFactory: (errors) => {
+      throw new HttpException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Validation failed',
+        errors: errors
+      }, HttpStatus.BAD_REQUEST);
+    }
+  }))
   @Header('Access-Control-Allow-Origin', '*')
   create(@Body() createUrlDto: CreateUrlDto) {
     return this.urlService.create(createUrlDto);
@@ -22,8 +31,7 @@ export class UrlController {
   @Patch(':shortened_id')
   @Header('Access-Control-Allow-Origin', '*')
   removeUrlFromUser(@Param('shortened_id') shortened_id: string, @Body() body:any) {   
-    const { token } = body;
-    
+    const { token } = body;  
     return this.urlService.removeUrlFromUser(shortened_id, token);
   }
 }
