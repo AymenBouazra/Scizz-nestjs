@@ -72,9 +72,9 @@ export class AuthService {
   }
 
   async forgetPassword(forgetPasswordDto: ForgetPasswordDto) {
-    const { email } = forgetPasswordDto;    
-    const auth = await this.authModel.findOne({ email });
     try {
+      const { email } = forgetPasswordDto;    
+      const auth = await this.authModel.findOne({ email });      
       if (auth) {
         const resetToken = randomString.generate(30)
         await this.tokenModel.create({
@@ -101,11 +101,11 @@ export class AuthService {
         });
         return new HttpException({ message: 'Please check your mailbox to reset your account\'s password!' }, HttpStatus.OK);
       } else {
-        return new HttpException({ message: 'Cannot find any user wih this email, try again with an existing e-mail account!' }, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new HttpException({ message: 'Cannot find any user wih this email, try again with an existing e-mail account!' }, HttpStatus.NOT_FOUND);
       }
     } catch (error) {
 
-      return new HttpException({message: 'Internal server error!',error}, HttpStatus.INTERNAL_SERVER_ERROR);
+      return new HttpException({ message: 'Internal server error!',error}, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

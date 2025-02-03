@@ -24,8 +24,8 @@ export class AuthController {
     return this.userService.signIn(loginDto);
   }
 
-  @Post('/forget-password')
-  forgetPassword(@Body(new ValidationPipe()) forgetPasswordDto: ForgetPasswordDto): Promise<any> {
+  @Post('/forgot-password')
+  forgetPassword(@Body(new ValidationPipe()) forgetPasswordDto: ForgetPasswordDto): Promise<any> {  
     return this.userService.forgetPassword(forgetPasswordDto);
   }
 
