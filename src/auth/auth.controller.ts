@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post, Put, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Req, UseGuards, ValidationPipe } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login-user.dto";
 import { ForgetPasswordDto } from "./dto/forget-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { AuthGuard } from "@nestjs/passport";
 
 @Controller('auth')
 export class AuthController {
@@ -35,7 +36,8 @@ export class AuthController {
   }
 
   @Get('/profile/:token')  
-  getProfile(@Param('token') token: string): Promise<any> {
-    return this.userService.getProfile(token);
+  @UseGuards(AuthGuard('jwt'))
+  getProfile(@Req() req: Request): Promise<any> { 
+    return this.userService.getProfile(req['user']._id);
   }
 }

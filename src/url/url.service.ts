@@ -14,29 +14,77 @@ export class UrlService {
     @InjectModel(Auth.name) private authModel: Model<Auth>
   ) {}
   async create(body: CreateUrlDto) {
-    const { originalUrl, token } = body;
-    const urlExists = await this.urlModel.findOne({ originalUrl });
-    if (urlExists) {
-      throw new HttpException({ message: 'URL already exists', shortenedUrl: urlExists.shortenedUrl }, HttpStatus.BAD_REQUEST);
+    try {
+      const { originalUrl, token } = body;
+      if (token) {
+        const decodedToken = jwtDecode<JwtPayload>(token);
+        const { id } = decodedToken;
+        const urlExists = await this.urlModel.findOne({ originalUrl }).lean();
+        if (urlExists) {
+          const user = await this.authModel.findById(id);
+          const found = user?.urlIds.some(urlId => urlId.equals(urlExists._id));
+  
+          if (found) {
+            return new HttpException(
+              { message: 'This Scizz already exists', shortenedUrl: urlExists.shortenedUrl },
+              HttpStatus.FOUND,
+            );
+          } else {
+            await this.authModel.findByIdAndUpdate(
+              id,
+              { $push: { urlIds: urlExists._id } },
+              { new: true },
+            );
+            return new HttpException(
+              { message: 'Scizz added to your list', shortenedUrl: urlExists.shortenedUrl },
+              HttpStatus.OK,
+            );
+          }
+        } else {
+          const urlCreate = await this.urlModel.create({ originalUrl });
+          const shortenedUrl = `${process.env.CORS_ORIGIN}/url/${urlCreate.shortUrlId}`;
+          await this.urlModel.findOneAndUpdate(
+            { originalUrl },
+            { $set: { shortenedUrl } },
+            { new: true },
+          );
+          await this.authModel.findByIdAndUpdate(
+            id,
+            { $push: { urlIds: urlCreate._id } },
+            { new: true },
+          );
+          return new HttpException(
+            { message: 'Scizz created', shortenedUrl },
+            HttpStatus.CREATED,
+          );
+        }
+      } else {
+        const urlCreate = await this.urlModel.create({ originalUrl });
+        const shortenedUrl = `${process.env.CORS_ORIGIN}/url/${urlCreate.shortUrlId}`;
+        await this.urlModel.findOneAndUpdate(
+          { originalUrl },
+          { $set: { shortenedUrl } },
+          { new: true },
+        );
+        return new HttpException(
+          { message: 'Scizz created', shortenedUrl },
+          HttpStatus.CREATED,
+        );
+      }
+    } catch (error) {
+      return new HttpException(
+        { message: 'Internal server error', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    
-    const urlcreate = await this.urlModel.create({ originalUrl });
-    await this.urlModel.findOneAndUpdate({ originalUrl }, { $set: { shortenedUrl: process.env.CORS_ORIGIN +'/url/'+ urlcreate.shortUrlId} });
-    if (token) {
-      const decodedToken = jwtDecode<JwtPayload>(token);
-      const { id } = decodedToken;
-      await this.authModel.findByIdAndUpdate(id, { $push: { urlIds: urlcreate._id } }, { new: true });
-    }
-    return  { message: 'URL created', shortenedUrl: process.env.CORS_ORIGIN +'/url/'+ urlcreate.shortUrlId, shortUrlId: urlcreate.shortUrlId };
-
   }
   async findOne(shortUrlId: string) {
       const url = await this.urlModel.findOne({shortUrlId: shortUrlId});
       if (!url) {
-        throw new HttpException({ message: 'URL not found' }, HttpStatus.NOT_FOUND);
+        throw new HttpException({ message: 'Scizz not found' }, HttpStatus.NOT_FOUND);
       } else { 
         await this.urlModel.findByIdAndUpdate(url._id, { $set: { clicks: url.clicks + 1 } });
-        return { message: 'URL found', originalUrl: url.originalUrl };
+        return { message: 'Scizz found', originalUrl: url.originalUrl };
       }
   }
 
@@ -52,9 +100,9 @@ export class UrlService {
           user.urlIds.splice(index, 1);
           await this.authModel.findByIdAndUpdate(id, { $pull: { urlIds: urlId } }).lean();
           await this.urlModel.findByIdAndDelete(urlId);
-          return new HttpException({ message: 'URL removed', user }, HttpStatus.OK);
+          return new HttpException({ message: 'Scizz removed', user }, HttpStatus.OK);
         } else {
-          return new HttpException({ message: 'URL not found' }, HttpStatus.NOT_FOUND);
+          return new HttpException({ message: 'Scizz not found' }, HttpStatus.NOT_FOUND);
         }
       } else {
         return new HttpException({ message: 'User not found' }, HttpStatus.NOT_FOUND);

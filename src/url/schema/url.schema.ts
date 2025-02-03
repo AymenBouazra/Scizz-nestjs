@@ -8,7 +8,6 @@ import * as randomString from 'randomstring';
 })
 export class Url extends Document {
   @Prop({    
-    unique: true, 
     required: true,
     type: String,
   })
