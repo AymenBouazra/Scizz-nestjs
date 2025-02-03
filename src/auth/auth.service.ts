@@ -11,6 +11,10 @@ import { RegisterDto } from './dto/register-user.dto';
 import { LoginDto } from './dto/login-user.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import * as path from 'path';
+import { signupTemplate } from './templates/signup';
+import { forgotPasswordTemplate } from './templates/forgot-password';
+import { resetPasswordConfirmationTemplate } from './templates/reset-password-confirmation';
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,6 +24,7 @@ export class AuthService {
     private readonly tokenModel: Model<Token>,
     private readonly jwtService: JwtService,
   ) { }
+
   async signUp(registerDto: RegisterDto) {
     const { firstname, lastname, password, email } = registerDto;
     const found = await this.authModel.findOne({ email })
@@ -35,18 +40,25 @@ export class AuthService {
       });
       const transporter = createTransport({
         service: "gmail",
-        auth: {
+        auth: { 
           user: process.env.EMAIL,
           pass: process.env.PASSWORD
         }
       });
+      
       await transporter.sendMail({
-        from: `"Url Shortner" ${process.env.EMAIL}`,
+        from: `"Scizz" ${process.env.EMAIL}`,
         to: email,
         subject: "Account created ✔",
-        html: `
-        <b>Your account was created successfully</b>
-        `,
+        template: 'signup',
+        html: signupTemplate(firstname, process.env.HOST || 'http://localhost:3000/signin'),
+        attachments: [
+          {
+            filename: 'Scizz.png',
+            path: path.join(__dirname, '../../assets/img/scizz-brand.png'),
+            cid: 'logo',
+          },
+        ],
       });
       return new HttpException({ message: 'You have been registered successfully!', user }, HttpStatus.CREATED);
     }
@@ -88,14 +100,17 @@ export class AuthService {
         });
 
         await transporter.sendMail({
-          from: `"Aymen Boauzra" ${process.env.EMAIL}`,
+          from: `"Scizz" ${process.env.EMAIL}`,
           to: email,
           subject: "Forgot password account ✔",
-          html: ` 
-            <h2>Reset password</h2><br>
-            <a href='${process.env.HOST}/reset-password/${resetToken}'>Reset password link</a>
-            <b style='color:red'>This link will expire after 15 minutes </b>
-            `,
+          html: forgotPasswordTemplate(auth.firstname, process.env.HOST+ '/reset-password/' + resetToken),
+          attachments: [
+            {
+              filename: 'Scizz.png',
+              path: path.join(__dirname, '../../assets/img/scizz-brand.png'),
+              cid: 'logo',
+            },
+          ],
         });
         return new HttpException({ message: 'Please check your mailbox to reset your account\'s password!' }, HttpStatus.OK);
       } else {
@@ -126,12 +141,17 @@ export class AuthService {
         });
 
         await transporter.sendMail({
-          from: `"Aymen Boauzra" ${process.env.EMAIL}`,
+          from: `"Scizz" ${process.env.EMAIL}`,
           to: auth.email,
           subject: "Account password reset ✔",
-          html: ` 
-            <b>Your password has been reset successfully</b><br>
-          `,
+          html: resetPasswordConfirmationTemplate(auth.firstname, process.env.HOST+ '/signin'),
+          attachments: [
+            {
+              filename: 'Scizz.png',
+              path: path.join(__dirname, '../../assets/img/scizz-brand.png'),
+              cid: 'logo',
+            },
+          ],
         });
         return new HttpException({ message: 'Password has been reset!' }, HttpStatus.OK);
       } else {
