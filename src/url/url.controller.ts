@@ -18,6 +18,8 @@ export class UrlController {
   }))
   @Header('Access-Control-Allow-Origin', '*')
   create(@Body() createUrlDto: CreateUrlDto) {
+    console.log(createUrlDto);
+    
     return this.urlService.create(createUrlDto);
   }
 

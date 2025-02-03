@@ -15,7 +15,7 @@ export class UrlService {
   ) {}
   async create(body: CreateUrlDto) {
     try {
-      const { originalUrl, token } = body;
+      const { originalUrl, token } = body;      
       if (token) {
         const decodedToken = jwtDecode<JwtPayload>(token);
         const { id } = decodedToken;
